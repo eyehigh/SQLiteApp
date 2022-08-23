@@ -171,6 +171,79 @@ namespace SQLiteApp
                 return null;
             }
         }
+        public bool Query(string query)
+        {
+            bool result = false;
+
+            beginTran();
+
+            cmd.CommandText = query;
+            try
+            {
+                int nRow = cmd.ExecuteNonQuery();
+                if(nRow > 0)
+                {
+                    result = true;
+                    Commit();
+                }
+                else
+                {
+                    result = false;
+                    Rollback();
+                }
+            }
+            catch(SQLiteException ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            finally
+            {
+                ClearTran();
+            }
+            
+            return result;
+        }
+        public bool MultiQuery(List<string> lst_query)
+        {
+            bool result = true;
+
+            beginTran();
+            for( int i = 0; i < lst_query.Count; i++)
+            {
+                cmd.CommandText = lst_query[i];
+                try
+                {
+                    int nRow = cmd.ExecuteNonQuery();
+                    if (nRow > 0)
+                    {
+                    }
+                    else
+                    {
+                        result = false;
+                        Console.WriteLine("Fail : "+ lst_query[i]);
+                        break;
+                    }
+                }
+                catch (SQLiteException ex)
+                {
+                    result = false;
+                    Console.WriteLine(ex.Message);
+                }
+            }
+
+            if (result)
+            {
+                Commit();
+            }
+            else
+            {
+                Rollback();
+            }
+
+            ClearTran();
+
+            return result;
+        }
         public void testFunc()
         {
             try
@@ -187,6 +260,14 @@ namespace SQLiteApp
 
                 ////---------------------------------------------------------------------------
                 //// INSERT DATA
+                ///
+
+                //Query("INSERT INTO TEST(NAME, DESC) VALUES('test3', 'desc')");
+                List<string> strings = new List<string>();
+                //strings.Add("INSERT INTO TEST(NAME, DESC) VALUES(null, 'desc')");
+                strings.Add("DELETE FROM TEST WHERE id=1");
+                MultiQuery(strings);
+
                 //FbTransaction transaction = conn.BeginTransaction();
                 //cmd.Transaction = transaction;
                 //cmd.CommandText = "INSERT INTO T_POS(STR_ID_CODE, POS_NO, POS_NAME) VALUES('00', '11','" + DateTime.Now.ToString("HHmmtt") + "');";
